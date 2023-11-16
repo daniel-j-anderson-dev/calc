@@ -27,7 +27,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let expression: Expression = match input.parse() { 
             Ok(parsed_expression) => parsed_expression,
             Err(error) => {
-                eprintln!("Invalid input: {}\nTry again", error);
+                eprintln!("Invalid input:\n{}\nTry again", error);
                 continue;
             },
         }; 
@@ -36,7 +36,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         match expression.evaluate() { 
             Ok(result) => println!("{} = {}", expression, result),
             Err(error) => {
-                eprintln!("Error evaluating expression: {}\nTry again", error);
+                eprintln!("Error evaluating expression:\n{}\nTry again", error);
                 continue;
             }, 
         }
