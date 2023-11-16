@@ -1,10 +1,18 @@
-use std::{io::{self, Write, stdin}, str::FromStr, fmt::Display};
+use std::{
+    io::{
+        self,
+        Write,
+        stdin
+    },
+    str::FromStr,
+    fmt::Display
+};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // greeting 
-    println!("Simple Terminal Calculator\nSupported operations: + - * / ^");
+    println!("Simple Terminal Calculator\nSupported operations: + - * / ^\ntype exit to quit");
 
-    // use the calculator
+    // keep allowing user to input expressions until they type quit
     loop {
         // get input
         let input = get_input("> ")?;
@@ -37,6 +45,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
+/// An expression has 
 struct Expression {
     lhs: f64,
     rhs: f64,
@@ -66,41 +75,64 @@ impl FromStr for Expression { // Trait that allows .parse to work
     /// # Returns
     ///  - `Ok(expression)`: When `s` is one of the supported operation characters,
     ///  - `Err(from_str_error)`: When `s` is not one of the supported operation characters,
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let mut string = String::new();
-        for char in s.chars() {
-            if !char.is_whitespace() {
-                string.push(char);
+    fn from_str(original_str: &str) -> Result<Self, Self::Err> {
+        
+        //  Store each character from `original_str` that is not whitespace
+        let mut string = String::new(); // create a new `String` to store the non-whitespace characters in
+
+        for character in original_str.chars() { // iterate over every character in `original_str`
+        
+            if !character.is_whitespace() { // if the character is not whitespace
+                string.push(character); // then push (append) the non-whitespace character onto `string`
             }
         } 
 
-        let mut lhs = String::new();
-        let mut current_index = 0;
-        for (i, char) in string.chars().enumerate() {
-            if char.is_digit(10) || char == '.' {
-                lhs.push(char);
+
+        // Store the first string of digits to `lhs`
+        let mut lhs = String::new(); // Create a new string to hold digit characters in
+        let mut current_index = 0; // we'll use this later to find the `operation` and `rhs`
+
+        for (i, character) in string.chars().enumerate() { // iterate over each character with its index
+
+            if character.is_digit(10) || character == '.' { // if the character is a number or '.'
+                lhs.push(character); // then push the digit character onto `lhs`
             }
             else {
-                current_index = i; // save index of first non-digit non. char
-                break;
+                // if the character was not a digit then `character` is the operator.
+                current_index = i; // save index of first non-digit (aka operator index)
+                break; // stop the loop because we found the end of `lhs`
             }
         }
-        let lhs: f64 = match lhs.parse() {
+        let lhs: f64 = match lhs.parse() { // parse `lhs` into a `f64`
+
+            // if `.parse()` return `Ok` the value shadows `lhs`
             Ok(parsed_lhs) => parsed_lhs,
+
+            // if `.parse()` returns `Err` with with some context
             Err(error) => return Err(format!("Failed to parse left hand side: {}", error).into()),
         };
 
-        let operation = match string.chars().nth(current_index) {
-            Some(operation) => match operation.to_string().parse() {
+
+        // get the operation from `string`
+        let operation = match string.chars().nth(current_index) { // try to get the character at `current_index`
+
+            // if there is some character at `current_index` 
+            Some(character) => match character.to_string().parse() { // try to parse `character`
+
+                // if `.parse()` succeeds the value is bound to `operation`
                 Ok(parsed_operation) => parsed_operation,
+
+                // if `.parse()` fails, then we return an `Err` with some context
                 Err(error) => return Err(format!("Failed to parse operation: {}", error).into()),
             },
-            None => return Err("Missing operator".into()),
-        };
-        current_index += 1;
 
-        println!("{}", &string[current_index..]);
-        let rhs: f64 = match string[current_index..].parse() { // parse the remainder of `string` ignore
+            // if there is nothing then return an error
+            None => return Err("Failed to parse operation: Missing operator".into()),
+        };
+        current_index += 1; // we have accounted for the operation character so increment to the next character index
+
+        // the remaining slice of `string` should be rhs
+        let rhs: f64 = match string[current_index..].parse() { // parse the remainder of `string`
             Ok(parsed_rhs) => parsed_rhs,
             Err(error) => return Err(format!("Failed to parse right hand side: {}", error).into()),
         };
@@ -110,7 +142,7 @@ impl FromStr for Expression { // Trait that allows .parse to work
 }
 impl Display for Expression { // allows for `println!()` and `.to_string()`
 
-    /// writes a the expression to the formatter `f`
+    /// writes the the expression to the formatter `f`
     /// # Parameters
     ///  - `f`: the `Formatter` that we will write the expression to. (can be a string or stdout) 
     /// # Returns
